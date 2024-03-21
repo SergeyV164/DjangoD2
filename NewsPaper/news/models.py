@@ -40,6 +40,7 @@ class Post(models.Model):
     text = models.TextField()
     rating = models.SmallIntegerField(default = 0)
 
+
     def like(self):
         self.rating += 1
         self.save()
@@ -50,6 +51,9 @@ class Post(models.Model):
 
     def preview(self):
         return self.text[0:123] + '...'
+
+    def __str__(self):
+        return f'{self.title}: {self.text[:20]}'
 
 
 class PostCategory(models.Model):
