@@ -1,11 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum
+from django.urls import reverse
+from django.core.validators import MinValueValidator
 
 
 class Author(models.Model):
     authorUser = models.OneToOneField(User, on_delete=models.CASCADE)
     ratingAuthor = models.SmallIntegerField(default = 0)
+
+    def __str__(self):
+        return self.authorUser.username
 
     def update_rating(self):
         postRat = self.post_set.aggregate(postRating=Sum('rating'))
@@ -23,6 +28,9 @@ class Author(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length = 128, unique = True)
 
+    def __str__(self):
+        return self.name.title()
+
 
 class Post(models.Model):
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
@@ -33,7 +41,7 @@ class Post(models.Model):
         (News, 'Новость'),
         (Article, 'Статья')
     ]
-    categoryType = models.CharField(max_length = 2, choices = Category_Choices, default = Article)
+    categoryType = models.CharField(max_length = 2, choices = Category_Choices, default = News)
     dataCreate = models.DateTimeField(auto_now_add=True)
     postCategory = models.ManyToManyField(Category, through='PostCategory')
     title = models.CharField(max_length = 128)
@@ -54,6 +62,9 @@ class Post(models.Model):
 
     def __str__(self):
         return f'{self.title}: {self.text[:20]}'
+
+    def get_absolute_url(self):
+        return reverse('post_detail', args=[str(self.id)])
 
 
 class PostCategory(models.Model):
