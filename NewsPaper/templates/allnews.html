@@ -12,14 +12,27 @@ Posts
    <h1>Количество всех новостей:</h1>
    <h1>{{posts|length}}</h1>
    <hr>
+   <tr>
+       {% if perms.news.add_post %}
+       <a href="{% url 'news_create' %}">Добавить пост</a>
+       {% endif %}
+   <tr>
    {% if posts %}
        <table>
            <tr>
+
                <td>Название</td>
                <td>Категория</td>
                <td>Тип категории</td>
                <td>Дата публикации</td>
                <td>Превью</td>
+
+
+               {% if perms.news.news_update or perms.news.news_delete %}
+               <td> Действия </td>
+               {% endif %}
+
+
            </tr>
            {% for post in posts %}
            <tr>
@@ -32,6 +45,18 @@ Posts
                <td>{{ post.categoryType|censor }}</td>
                <td>{{ post.dataCreate|date:'d M Y' }}</td>
                <td>{{ post.text|censor|truncatechars:20 }}</td>
+
+
+               <td>
+                   {% if perms.news.change_post %}
+                   <a href="{% url 'news_update' pk=post.id %}">Изменить</a>
+                   {% endif %}
+
+                   {% if perms.news.delete_post %}
+                   <a href="{% url 'news_delete' pk=post.id %}">Удалить</a>
+                   {% endif %}
+               <td>
+
            </tr>
            {% endfor %}
 

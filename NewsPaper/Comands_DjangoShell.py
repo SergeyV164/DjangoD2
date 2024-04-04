@@ -169,12 +169,15 @@ post.comment_set.all()
 post.comment_set.values('dateCreation', 'commentUser', 'text', 'rating')
 <QuerySet [{'dateCreation': datetime.datetime(2024, 3, 17, 8, 28, 26, 390899, tzinfo=datetime.timezone.utc), 'commentUser': 4, 'text': 'bigtext', 'rating': 4}]>
 
-
-
-
-
-
-
+< tr >
+< td >
+{ % if perms.news.create_post %}
+< a
+href = "{% url 'news_create' post %}" > Добавить
+пост < / a >
+{ % endif %}
+< td >
+< tr >
 
 
 
