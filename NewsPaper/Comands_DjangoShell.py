@@ -169,15 +169,114 @@ post.comment_set.all()
 post.comment_set.values('dateCreation', 'commentUser', 'text', 'rating')
 <QuerySet [{'dateCreation': datetime.datetime(2024, 3, 17, 8, 28, 26, 390899, tzinfo=datetime.timezone.utc), 'commentUser': 4, 'text': 'bigtext', 'rating': 4}]>
 
-< tr >
-< td >
-{ % if perms.news.create_post %}
-< a
-href = "{% url 'news_create' post %}" > Добавить
-пост < / a >
-{ % endif %}
-< td >
-< tr >
 
 
 
+
+@login_required
+@csrf_protect
+def subscriptions(request):
+    if request.method == 'POST':
+        category_id = request.POST.get('category_id')
+        category = Category.objects.get(id=category_id)
+        action = request.POST.get('action')
+
+        if action == 'subscribe':
+            Subscription.objects.create(user=request.user, category=category)
+        elif action == 'unsubscribe':
+            Subscription.objects.filter(
+                user=request.user,
+                category=category,
+            ).delete()
+
+    categories_with_subscriptions = Category.objects.annotate(
+        user_subscribed=Exists(
+            Subscription.objects.filter(
+                user=request.user,
+                category=OuterRef('pk'),
+            )
+        )
+    ).order_by('name')
+    return render(
+        request,
+        'subscriptions.html',
+        {'categories': categories_with_subscriptions},
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CategoryListView(PostsList):
+    model = Post
+    template_name = 'category_list.html'
+    context_object_name = 'category_news_list'
+
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, id=self.kwargs['pk'])
+        queryset = Post.objects.filter(category=self.category).order_by('-created_at')
+        return queryset
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_not_subscriber'] = self.request.user not in self.category.subscribers.all()
+        context['category'] = self.category
+        return context
+
+
+@login_required
+def subscribe(request, pk):
+    user = request.user
+    category = Category.objects.get(id=pk)
+    category.subscribers.add(user)
+
+    message = 'Вы успешно подписаилсь на рассылку новостей этой категории'
+    return render(request, 'subscribe.html', {'category': category, 'message': message})
+
+
+
+
+
+
+
+
+
+
+
+    if kwargs['action'] =='post_add':
+
+        emails = User.objects.filter(
+            subscriptions__category=instance.postCategory
+        ).values_list('email', flat=True)
+
+        subject = f'Новая новость в категории {instance.postCategory}'
+
+        text_content = (
+            f'Новость: {instance.title}\n'
+            f'Ссылка на новость: http://127.0.0.1:8000{instance.get_absolute_url()}'
+        )
+        html_content = (
+            f'Новость: {instance.title}<br>'
+            f'<a href="http://127.0.0.1{instance.get_absolute_url()}">'
+            f'Ссылка на новость</a>'
+        )
+        for email in emails:
+            msg = EmailMultiAlternatives(subject, text_content, None, [email])
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
